@@ -50,8 +50,6 @@ unsigned int openCM_fb[10] = {0,0,0,0,0,0,0,0,0,0};
 
 ros::NodeHandle nh;
 std_msgs::UInt16 armProfile_idx_ros;
-//std_msgs::UInt16 armStep_idx_ros;
-
 std_msgs::UInt16MultiArray dxlGoalPos_ros;
 std_msgs::UInt8 drillState_ros;
 std_msgs::UInt8 servoState_ros;
@@ -64,7 +62,7 @@ ros::Publisher pub_armProfile_idx("/armProfile_idx", &armProfile_idx_ros);
 //ros::Publisher pub_armStep_idx("/armStep_idx", &armStep_idx_ros);
 ros::Publisher pub_drillState("/drillState", &drillState_ros);
 ros::Publisher pub_servoState("/servoState", &servoState_ros);
-ros::Subscriber<std_msgs::UInt16MultiArray> curPos_sub("/dxlCurPos", &dxlCurPos_cb );
+ros::Subscriber<std_msgs::UInt16MultiArray> curPos_sub("/dxlCurPos_All", &dxlCurPos_cb );
 ros::Subscriber<std_msgs::Char> command_sub("/trailerCommand", &trailerCommand_cb);
 
 enum drillState{
@@ -338,10 +336,17 @@ void runState()
       turnOffSignal();
       break;
     case DRILLING:
-      commandMotor(1,-VERTICALSPEED);
-      commandMotor(2,DRILLSPEED);
+      if(openCM_fb[2] > (FILTRATIONOUT+10) || openCM_fb[2] < (FILTRATIONOUT-10))
+      {
+        openCM_cmd[2] = FILTRATIONOUT;
+      }
+      else
+      {
+        commandMotor(1,-VERTICALSPEED);
+        commandMotor(2,DRILLSPEED);
+        turnOnSignal();
+      }
       LASTDRILLSTATE = DRILLING;
-      turnOnSignal();
       break;
     case PULLING:
       commandMotor(1, VERTICALSPEED);
@@ -371,6 +376,7 @@ void runState()
       commandMotor(2,0);
       LASTDRILLSTATE = DRILLPENDING;
       turnOffSignal();
+      armProfile_idx = 1;
       break;
     // case MOVINGINFILTRATION:
     //   commandMotor(1,0);
@@ -425,10 +431,10 @@ void runState()
     break;
     case SERVOPAUSED:
       stopCentrifuge();
-      for (int i = 0; i < 10; i++)
-      {
-        openCM_cmd[i] = 0;
-      }
+//      for (int i = 0; i < 10; i++)
+//      {
+//        openCM_cmd[i] = 0;
+//      }
       //send all 0 to opencm
       //send stop running to centrifugeSpeed
     break;
@@ -450,14 +456,14 @@ void runState()
       runCentrifuge();
     break;
     case ARMRUNPROFILE01:
-    armProfile_idx = 0;
+    armProfile_idx = 1;
     // arm run profile 1 (from rest, pickup meshtube, move under filtration tower)
     //if arm in final position
     //SERVOSTATE = PENDING;
     //DRILLSTATE = EXTRACTING;
     break;
     case ARMRUNPROFILE02:
-    armProfile_idx = 1;
+    armProfile_idx = 2;
 
     //arm run profile 2 (from under the filtration tower to the centrifuge, slowly put int mesh tube,
     //then move to rest pos)
