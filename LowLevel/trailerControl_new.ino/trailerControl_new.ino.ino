@@ -17,6 +17,10 @@
 #define FILTRATIONOUT     703
 #define FILTRATIONUP      643
 #define FILTRATIONTILT    309
+#define ARMPROFILE1STEPS  100
+#define ARMPROFILE2STEPS  100
+#define ARMPROFILE3STEPS  100
+
 
 ros::NodeHandle nh;
 std_msgs::UInt16 armProfile_idx_ros;
@@ -25,6 +29,7 @@ std_msgs::UInt8 controlState_ros;
 
 std_msgs::UInt16 openCM_fb;
 byte armProfile_idx;
+volatile uint16_t armStep = 0;
 
 enum controlStates
 {
@@ -39,17 +44,19 @@ void setup() {
   ros::Publisher pub_controlState("/controlState", &controlState_ros);
   ros::Subscriber<std_msgs::UInt16MultiArray> curPos_sub("/dxlCurPos_All", &dxlCurPos_cb );
   ros::Subscriber<std_msgs::Char> command_sub("/trailerCommand", &trailerCommand_cb);
+  ros::Subscriber<std_msgs::UInt16> armStep_sub("/armStep", &armStep_cb);
   nh.getHardware()->setBaud(115200);
   nh.initNode();
-  dxlGoalPos_ros.data = (uint16_t *)malloc(sizeof(uint16_t)*8);
-  dxlGoalPos_ros.data_length = 10; 
-  openCM_fb.data = (uint16_t *)malloc(sizeof(uint16_t)*8);
+  dxlGoalPos_ros.data = (uint16_t *)malloc(sizeof(uint16_t)*4);
+  dxlGoalPos_ros.data_length = 4; 
+  openCM_fb.data = (uint16_t *)malloc(sizeof(uint16_t)*10);
   openCM_fb.data_length = 10;
   nh.advertise(pub_dxlGoalPos);
   nh.advertise(pub_armProfile_idx);
   nh.advertise(pub_controlState);
   nh.subscribe(curPos_sub);
   nh.subscribe(command_sub);
+  nh.subscribe(armStep_sub);
 
   Serial1.begin(9600); //connect to drill motor controller
   Serial2.begin(115200); //connect to Centrifuge
@@ -86,11 +93,7 @@ void GPIOInit()
   attachInterrupt(digitalPinToInterrupt(LIMITDOWN), downLimitISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(LIMITMID), midLimitISR, FALLING);
 }
-void loop() {
-  // put your main code here, to run repeatedly:
-
-  
-}
+void loop() {}
 void stateRun()
 {
   switch(CONTROLSTATE)
@@ -99,11 +102,13 @@ void stateRun()
     commandMotor(1, 0);
     commandMotor(2, 0);
     stopCentrifuge();
+    stopDxl();
     break;
     case DRILLING:
       if(openCM_fb.data[2] > (FILTRATIONOUT+10) || openCM_fb.data[2] < (FILTRATIONOUT-10))
       {
         dxlGoalPos_ros.data[2] = FILTRATIONOUT;
+        dxlGoalPos_ros.data[3] = FILTRATIONUP;
       }
       else
       {
@@ -112,6 +117,44 @@ void stateRun()
         turnOnSignal();
       }
     LASTSTATE = DRILLING;
+    break;
+    case PULLING:
+      commandMotor(1, VERTICALSPEED);
+      commandMotor(2, DRILLSPEED);
+      LASTSTATE = PULLING;
+      turnOnSignal();
+    break;
+    case DRILLWAITING:
+      commandMotor(1, 0);
+      commandMotor(2, 0);
+      if(openCM_fb.data[2] > (FILTRATIONIN+5) || openCM_fb.data[2] < (FILTRATIONIN-5))
+      {
+        dxlGoalPos_ros.data[2] = FILTRATIONIN;
+        dxlGoalPos_ros.data[3] = FILTRATIONUP;
+      }
+      else
+      {
+        CONTROLSTATE = RUNARMPROFILE1;
+      }
+      LASTSTATE = DRILLWAITING;
+      turnOffSignal();
+    break;
+    case RUNARMPROFILE1:
+      armProfile_idx = 1;
+      if (armStep == ARMPROFILE1STEPS)
+      {
+        CONTROLSTATE = EXTRACTING;
+      }
+      LASTDRILLSTATE = RUNARMPROFILE1;
+      break;
+    case EXTRACTING:
+      commandMotor(1, -VERTICALSPEED);
+      commandMotor(2, DRILLSPEED);
+      digitalWrite(VALVE1,LOW);//start valve 1
+      LASTSTATE = EXTRACTING;
+      turnOnSignal();
+    break;
+    case DRILLPENDING:
     break;
   }
 
@@ -122,6 +165,10 @@ void dxlCurPos_cb( const std_msgs::UInt16MultiArray& data)
   {
     openCM_fb.data[i] = data.data[i];
   }
+}
+void armStep_cb( const std_msgs::UInt16& data)
+{
+  armStep = (uint16_t)data.data;
 }
 
 void updateROSPubData()
@@ -135,16 +182,27 @@ void trailerCommand_cb( const std_msgs::Char& data)
 }
 void downLimitISR()
 {
-  
+  CONTROLSTATE = PULLING;
 }
 void upLimitISR()
 {
-
+  if (CONTROLSTATE == PULLING)
+  {
+    CONTROLSTATE = DRILLWAITING;
+  }
+  else if (CONTROLSTATE == DRILLFINISHING)
+  {
+    CONTROLSTATE = DRILLPENDING;
+  }
 }
 
 void midLimitISR()
 {
-
+  if (CONTROLSTATE == EXTRACTING)
+  {
+    DRILLSTATE = EXTRACTINGHOLD;
+    extractingHoldEnterTime = millis();
+  }
 }
 
 void commandMotor(int id, float speedFrac)
@@ -164,4 +222,9 @@ void commandMotor(int id, float speedFrac)
 void stopCentrifuge()
 {
   Serial2.print('P');
+}
+void stopDxl()
+{
+  armProfile_idx = 0;
+  goalPos_ros.data[]={0,0,0,0}
 }
