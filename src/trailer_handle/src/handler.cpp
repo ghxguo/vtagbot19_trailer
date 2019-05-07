@@ -1395,17 +1395,17 @@ uint16_t profile3[]=
 
 };
 void curPos_cb(const std_msgs::UInt16MultiArray::ConstPtr& array);
-void goalPos_cb(const std_msgs::UInt16MultiArray::ConstPtr& array);
+// void goalPos_cb(const std_msgs::UInt16MultiArray::ConstPtr& array);
 void armProfile_cb(const std_msgs::UInt16::ConstPtr& idx);
 void drillState_cb(const std_msgs::UInt8::ConstPtr& state);
-void servoState_cb(const std_msgs::UInt8::ConstPtr& state);
+// void servoState_cb(const std_msgs::UInt8::ConstPtr& state);
 void mainTasks();
 void runArm();
 bool readyToAdvance();
 
 
-uint16_t curPos[10] = {0,0,0,0,0,0,0,0,0,0};
-uint16_t goalPos[10] = {0,0,0,0,0,0,0,0,0,0};
+uint16_t curPos[6] = {0,0,0,0,0,0};
+uint16_t goalPos[6] = {0,0,0,0,0,0};
 uint16_t armProfile_idx = 0;
 uint16_t step = 0;
 uint8_t drillState = 0;
@@ -1421,17 +1421,17 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "handler");
   /* start cyclic part */
   ros::NodeHandle n;
-  ros::Publisher goalPos_pub = n.advertise<std_msgs::UInt16MultiArray>("dxlGoalPos_All", 100);
+  ros::Publisher goalPos_pub = n.advertise<std_msgs::UInt16MultiArray>("armGoalPos", 100);
   //ros::Publisher command_pub = n.advertise<std_msgs::Char>("trailerCommand",1000);
-  ros::Subscriber curPos_sub = n.subscribe("dxlCurPos_All", 100, curPos_cb);
+  ros::Subscriber curPos_sub = n.subscribe("armCurPos", 100, curPos_cb);
   ros::Subscriber armProfile_sub = n.subscribe("armProfile_idx", 100, armProfile_cb);
   ros::Subscriber drillState_sub = n.subscribe("drillState", 100, drillState_cb);
-  ros::Subscriber servoState_sub = n.subscribe("servoState", 100, servoState_cb);
-  ros::Subscriber goalPos_sub = n.subscribe("dxlGoalPos", 100, goalPos_cb);
+  // ros::Subscriber servoState_sub = n.subscribe("servoState", 100, servoState_cb);
+  // ros::Subscriber goalPos_sub = n.subscribe("dxlGoalPos", 100, goalPos_cb);
 
   ros::Rate loop_rate(100);
 
-  command_ros.data = 'p';
+  // command_ros.data = 'p';
 
 
   while(ros::ok())
@@ -1448,7 +1448,7 @@ void mainTasks()
 {
   runArm();
   goalPos_ros.data.clear();
-  for (int i = 0; i < 10; i++)
+  for (int i = 0; i < 6; i++)
   {
     goalPos_ros.data.push_back(goalPos[i]);
   }
@@ -1459,7 +1459,7 @@ void runArm()
   // ROS_INFO("profile: %d", armProfile_idx);
   if (armProfile_idx == 0)
   {
-    for (int i = 4; i < 10; i++)
+    for (int i = 0; i < 6; i++)
     {
       goalPos[i] = 0;
     }
@@ -1475,15 +1475,15 @@ void runArm()
         {
           // ROS_INFO("advanced to next step");
           step++;
-          for (int i = 4; i < 10; i++)
+          for (int i = 0; i < 6; i++)
           {
-            goalPos[i] = profile1[(i-4)+step*6];
+            goalPos[i] = profile1[(i)+step*6];
           }
         }
       }
       else
       {
-        for (int i = 4; i < 10; i++)
+        for (int i = 0; i < 6; i++)
         {
           goalPos[i] = 0;
         }
@@ -1492,9 +1492,9 @@ void runArm()
     else
     {
       step = 0;
-      for (int i = 4; i < 10; i++)
+      for (int i = 0; i < 6; i++)
       {
-        goalPos[i] = profile1[(i-4)];
+        goalPos[i] = profile1[(i)];
       }
       profileInited = true;
     }
@@ -1510,15 +1510,15 @@ void runArm()
         {
           // ROS_INFO("advanced to next step");
           step++;
-          for (int i = 4; i < 10; i++)
+          for (int i = 0; i < 6; i++)
           {
-            goalPos[i] = profile2[(i-4)+step*6];
+            goalPos[i] = profile2[(i)+step*6];
           }
         }
       }
       else
       {
-        for (int i = 4; i < 10; i++)
+        for (int i = 0; i < 6; i++)
         {
           goalPos[i] = 0;
         }
@@ -1527,9 +1527,9 @@ void runArm()
     else
     {
       step = 0;
-      for (int i = 4; i < 10; i++)
+      for (int i = 0; i < 6; i++)
       {
-        goalPos[i] = profile2[(i-4)];
+        goalPos[i] = profile2[i];
       }
       profile2Inited = true;
     }
@@ -1546,15 +1546,15 @@ void runArm()
           {
             // ROS_INFO("advanced to next step");
             step++;
-            for (int i = 4; i < 10; i++)
+            for (int i = 0; i < 6; i++)
             {
-              goalPos[i] = profile3[(i-4)+step*6];
+              goalPos[i] = profile3[(i)+step*6];
             }
           }
         }
         else
         {
-          for (int i = 4; i < 10; i++)
+          for (int i = 0; i < 6; i++)
           {
             goalPos[i] = 0;
           }
@@ -1563,9 +1563,9 @@ void runArm()
       else
       {
         step = 0;
-        for (int i = 4; i < 10; i++)
+        for (int i = 0; i < 6; i++)
         {
-          goalPos[i] = profile3[(i-4)];
+          goalPos[i] = profile3[i];
         }
         profile3Inited = true;
       }
@@ -1574,11 +1574,11 @@ void runArm()
 }
 bool readyToAdvance()
 {
-  for (int i = 4; i < 10; i++)
+  for (int i = 0; i < 6; i++)
   {
     int error = abs(curPos[i] - goalPos[i]);
-    ROS_INFO("error: %d", error);
-    ROS_INFO("curpos4: %d", curPos[4]);
+    // ROS_INFO("error: %d", error);
+    // ROS_INFO("curpos4: %d", curPos[4]);
     if (error > MOTIONTH)
     {
       return 0;
@@ -1588,7 +1588,7 @@ bool readyToAdvance()
 }
 void curPos_cb(const std_msgs::UInt16MultiArray::ConstPtr& array)
 {
-  for (int i = 0; i < 10; i++)
+  for (int i = 0; i < 6; i++)
   {
     curPos[i] = (uint16_t)(array->data[i]);
   }
@@ -1603,15 +1603,15 @@ void drillState_cb(const std_msgs::UInt8::ConstPtr& state)
   drillState = state->data;
   ROS_INFO("drillState: %d", drillState);
 }
-void servoState_cb(const std_msgs::UInt8::ConstPtr& state)
-{
-  servoState = state->data;
-  ROS_INFO("servoState: %d", servoState);
-}
-void goalPos_cb(const std_msgs::UInt16MultiArray::ConstPtr& array)
-{
-  for (int i = 0; i < 4; i++)
-  {
-    goalPos[i] = (uint16_t)array->data[i];
-  }
-}
+// void servoState_cb(const std_msgs::UInt8::ConstPtr& state)
+// {
+//   servoState = state->data;
+//   ROS_INFO("servoState: %d", servoState);
+// }
+// void goalPos_cb(const std_msgs::UInt16MultiArray::ConstPtr& array)
+// {
+//   for (int i = 0; i < 4; i++)
+//   {
+//     goalPos[i] = (uint16_t)array->data[i];
+//   }
+// }
