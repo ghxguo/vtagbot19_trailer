@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 import rospy
 import serial
+import struct
 from std_msgs.msg import String
 
 port = "/dev/ttyACM3"
 baud = 9600
 ser = serial.Serial(port, baud)
 curPos = [0,0,0,0,0,0]
-goalPos = [1111,2222,3333,4444,5555,6666]
+goalPos = [1111,2222,3333,1111,2222,1111]
 def tasks():
     # pub = rospy.Publisher('chatter', String, queue_size=10)
-
     rospy.init_node('armHandler', anonymous=True)
     rate = rospy.Rate(100) # 10hz
     while not rospy.is_shutdown():
@@ -26,12 +26,13 @@ def tasks():
         #     for x in range(6):
         #         curPos[x] = int(data[x+1])
         #         print(curPos[x])
-        outputArray = []
-        outputArray.append(bytes(65))
+        outputArray = bytearray()
+        outputArray.append(65)
         for x in range(6):
-            outputArray.append(bytes(goalPos[x] << 8))
-            outputArray.append(bytes(goalPos[x]))
-        outputArray.append(bytes(95))
+            data = struct.pack(">H", goalPos[x])
+            outputArray.append(data[0])
+            outputArray.append(data[1])
+        outputArray.append(95)
         ser.write(outputArray)
 
         # for x in range(len(curPos)):
