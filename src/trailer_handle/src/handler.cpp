@@ -17,7 +17,7 @@
 #include <std_msgs/Char.h>
 #include <vector>
 
-#define PROFILE1LENGTH  418
+#define PROFILE1LENGTH  412
 #define PROFILE2LENGTH  245
 #define PROFILE3LENGTH  402
 #define MOTIONTH        25
@@ -1402,6 +1402,7 @@ void drillState_cb(const std_msgs::UInt8::ConstPtr& state);
 void mainTasks();
 void runArm();
 bool readyToAdvance();
+void runArmState();
 
 
 uint16_t curPos[6] = {0,0,0,0,0,0};
@@ -1413,6 +1414,7 @@ uint8_t servoState = 0;
 bool profileInited = false;
 bool profile2Inited = false;
 bool profile3Inited = false;
+bool profileCompleted = false;
 
 std_msgs::UInt16MultiArray goalPos_ros;
 std_msgs::Char command_ros;
@@ -1446,13 +1448,122 @@ int main(int argc, char **argv)
 }
 void mainTasks()
 {
-  runArm();
+  runArmState();
   goalPos_ros.data.clear();
   for (int i = 0; i < 6; i++)
   {
     goalPos_ros.data.push_back(goalPos[i]);
   }
 
+}
+void runArmState()
+{
+  switch(armProfile_idx)
+  {
+    case 0:
+      step = 0;
+      profileInited = false;
+    break;
+    case 1:
+      ROS_INFO("running profile 1");
+      if(step < PROFILE1LENGTH)
+      {
+        if(!profileInited)
+        {
+          for (int i = 0; i < 6; i++)
+          {
+            goalPos[i] = profile1[i];
+            profileInited = true;
+          }
+        }
+        if(readyToAdvance())
+        {
+         
+          // ROS_INFO("advanced to next step");
+          
+          for (int i = 0; i < 6; i++)
+          {
+            goalPos[i] = profile1[(i)+step*6];
+          }
+          step++;
+        }
+      }
+      else
+      {
+        for (int i = 0; i < 6; i++)
+        {
+          goalPos[i] = 0;
+        }
+        armProfile_idx = 0;
+      }
+    break;
+    case 2:
+      ROS_INFO("running profile 2");
+      if(step < PROFILE2LENGTH)
+      {
+        if(!profileInited)
+        {
+          for (int i = 0; i < 6; i++)
+          {
+            goalPos[i] = profile2[i];
+            profileInited = true;
+          }
+        }
+        if(readyToAdvance())
+        {
+
+          //  ROS_INFO("advanced to next step");
+          
+          for (int i = 0; i < 6; i++)
+          {
+            goalPos[i] = profile2[(i)+step*6];
+          }
+          step++;
+        }
+      }
+      else
+      {
+        for (int i = 0; i < 6; i++)
+        {
+          goalPos[i] = 0;
+        }
+        armProfile_idx = 0;
+      }
+    break;
+    case 3:
+      ROS_INFO("Case 3");
+
+      if(step < PROFILE3LENGTH)
+      {
+        if(!profileInited)
+        {
+          for (int i = 0; i < 6; i++)
+          {
+            goalPos[i] = profile3[i];
+            profileInited = true;
+          }
+        }
+        if(readyToAdvance())
+        {
+          // ROS_INFO("advanced to next step");
+          
+          for (int i = 0; i < 6; i++)
+          {
+            goalPos[i] = profile3[(i)+step*6];
+          }
+          step++;
+        }
+      }
+      else
+      {
+        for (int i = 0; i < 6; i++)
+        {
+          goalPos[i] = 0;
+        }
+        armProfile_idx = 0;
+      }
+    break;
+  }
 }
 void runArm()
 {
@@ -1466,7 +1577,7 @@ void runArm()
   }
   else if (armProfile_idx == 1)
   {
-    if(profileInited)
+    if(profileInited && !profileCompleted)
     {
 
       if(step < PROFILE1LENGTH)
@@ -1487,6 +1598,8 @@ void runArm()
         {
           goalPos[i] = 0;
         }
+        profileCompleted = true;
+        profileInited = false;
       }
     }
     else
@@ -1497,6 +1610,7 @@ void runArm()
         goalPos[i] = profile1[(i)];
       }
       profileInited = true;
+      profileCompleted = false;
     }
   }
   else if (armProfile_idx == 2)
