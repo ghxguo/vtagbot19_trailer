@@ -1478,9 +1478,9 @@ void runArmState()
         }
         if(readyToAdvance())
         {
-         
+
           // ROS_INFO("advanced to next step");
-          
+
           for (int i = 0; i < 6; i++)
           {
             goalPos[i] = profile1[(i)+step*6];
@@ -1494,7 +1494,7 @@ void runArmState()
         {
           goalPos[i] = 0;
         }
-        armProfile_idx = 0;
+        // armProfile_idx = 0;
       }
     break;
     case 2:
@@ -1513,7 +1513,7 @@ void runArmState()
         {
 
           //  ROS_INFO("advanced to next step");
-          
+
           for (int i = 0; i < 6; i++)
           {
             goalPos[i] = profile2[(i)+step*6];
@@ -1527,7 +1527,7 @@ void runArmState()
         {
           goalPos[i] = 0;
         }
-        armProfile_idx = 0;
+        // armProfile_idx = 0;
       }
     break;
     case 3:
@@ -1546,7 +1546,7 @@ void runArmState()
         if(readyToAdvance())
         {
           // ROS_INFO("advanced to next step");
-          
+
           for (int i = 0; i < 6; i++)
           {
             goalPos[i] = profile3[(i)+step*6];
@@ -1560,7 +1560,7 @@ void runArmState()
         {
           goalPos[i] = 0;
         }
-        armProfile_idx = 0;
+        // armProfile_idx = 0;
       }
     break;
   }
