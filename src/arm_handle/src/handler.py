@@ -20,21 +20,20 @@ def tasks():
     armCurPos_pub = rospy.Publisher('armCurPos', UInt16MultiArray, queue_size = 10)
     rospy.init_node('armHandler', anonymous=True)
     rospy.Subscriber("armGoalPos", UInt16MultiArray, goalPos_cb)
-    rate = rospy.Rate(100) # 10hz
+    rate = rospy.Rate(50) # 10hz
+    ser.write('Q')
+    ser.flush()
+    data_raw = ser.readline()
+    data = data_raw.split(':')
+    curPos = [0,0,0,0,0,0]
+    if data[0] == 'A' and len(data) > 6:
+        for x in range(6):
+            curPos[x] = int(data[x+1])
+    armCurPos_pub.publish(data=curPos)
     while not rospy.is_shutdown():
         # hello_str = "hello world %s" % rospy.get_time()
         # rospy.loginfo(hello_str)
         # pub.publish(hello_str)
-
-        ser.write('Q')
-        ser.flush()
-        data_raw = ser.readline()
-        data = data_raw.split(':')
-        curPos = [0,0,0,0,0,0]
-        if data[0] == 'A' and len(data) > 6:
-            for x in range(6):
-                curPos[x] = int(data[x+1])
-        armCurPos_pub.publish(data=curPos)
         outputArray = bytearray()
         outputArray.append(65)
         for x in range(6):
@@ -43,6 +42,15 @@ def tasks():
             outputArray.append(data[1])
         outputArray.append(95)
         ser.write(outputArray)
+        ser.flush()
+        data_raw = ser.readline()
+        data = data_raw.split(':')
+        curPos = [0,0,0,0,0,0]
+        if data[0] == 'A' and len(data) > 6:
+            for x in range(6):
+                curPos[x] = int(data[x+1])
+        armCurPos_pub.publish(data=curPos)
+        
 
         # for x in range(len(curPos)):
         #     print(curPos[x])

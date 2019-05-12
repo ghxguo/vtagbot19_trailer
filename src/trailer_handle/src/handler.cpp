@@ -20,7 +20,7 @@
 #define PROFILE1LENGTH  412
 #define PROFILE2LENGTH  245
 #define PROFILE3LENGTH  402
-#define MOTIONTH        25
+#define MOTIONTH        40
 
 uint16_t profile1[] =
 {
@@ -1465,7 +1465,7 @@ void runArmState()
       profileInited = false;
     break;
     case 1:
-      ROS_INFO("running profile 1");
+      // ROS_INFO("running profile 1");
       if(step < PROFILE1LENGTH)
       {
         if(!profileInited)
@@ -1498,7 +1498,7 @@ void runArmState()
       }
     break;
     case 2:
-      ROS_INFO("running profile 2");
+      // ROS_INFO("running profile 2");
       if(step < PROFILE2LENGTH)
       {
         if(!profileInited)
@@ -1531,7 +1531,7 @@ void runArmState()
       }
     break;
     case 3:
-      ROS_INFO("Case 3");
+      // ROS_INFO("Case 3");
 
       if(step < PROFILE3LENGTH)
       {
