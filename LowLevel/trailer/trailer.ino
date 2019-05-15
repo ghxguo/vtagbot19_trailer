@@ -120,9 +120,10 @@ void stateRun()
     Serial3.print('i');
     //index
     //LASTSTATE
-    LASTSTATE = DRILLWAITING;
     if (TOWERPLACE = IN)
       CONTROLSTATE = RUNARMPROFILE1;
+    LASTSTATE = DRILLWAITING;
+
     break;
 
     case RUNARMPROFILE1:
@@ -141,31 +142,160 @@ void stateRun()
     //tower
     //index
     //LASTSTATE
-    LASTSTATE = RUNARMPROFILE1;
     if (armProfile_finished)
       CONTROLSTATE = EXTRACTING;
+    LASTSTATE = RUNARMPROFILE1;
+
     break;
 
     case EXTRACTING:
     //Drill
-    commandMotor(1,0);
-    commandMotor(2,0);
+    commandMotor(1,-VIRTICALSPEED);
+    commandMotor(2,DRILLSPEED);
     //arm
-    armProfile_idx = 1;
+    // armProfile_idx = 1;
     //Centrifuge
-    Serial2.print(sample_idx);
+    // Serial2.print(sample_idx);
     //relays
-    digitalWrite(VALVE1,HIGH);
+    digitalWrite(VALVE1,LOW); //
+    digitalWrite(VALVE2,HIGH);
+    digitalWrite(SIGNALLIGHT,LOW);
+    digitalWrite(WASHPUMP,HIGH);
+    //tower
+    //index
+    //LASTSTATE
+    LASTSTATE = EXTRACTING;
+    //state change handled by limit switch
+    break;
+
+
+    case EXTRACTINGHOLD:
+    //Drill
+    commandMotor(1,0);
+    commandMotor(2,DRILLSPEED);
+    //arm
+    // armProfile_idx = 1;
+    //Centrifuge
+    // Serial2.print(sample_idx);
+    //relays
+    if (millis() - extractingHoldEnterTime_water > EXTRACTINGWATERTIME)
+      digitalWrite(VALVE1,HIGH); //
+    else
+      digitalWrite(VALVE1,LOW); //
     digitalWrite(VALVE2,HIGH);
     digitalWrite(SIGNALLIGHT,HIGH);
     digitalWrite(WASHPUMP,HIGH);
     //tower
     //index
+    if (millis() - extractingHoldEnterTime > EXTRACTINGTIME)
+      CONTROLSTATE = DRILLFINISHING;
     //LASTSTATE
-    LASTSTATE = RUNARMPROFILE1;
-    if (armProfile_finished)
-      CONTROLSTATE = EXTRACTING;
+    LASTSTATE = EXTRACTINGHOLD;
     break;
+
+    case DRILLFINISHING:
+    //Drill
+    if (!drillAtTop)
+      commandMotor(1,VIRTICALSPEED);
+    else
+      commandMotor(1,0);
+    commandMotor(2,0);
+    //arm
+    armProfile_idx = 2;
+    //Centrifuge
+    // Serial2.print(sample_idx);
+    //relays
+    digitalWrite(VALVE1,HIGH); //
+    digitalWrite(VALVE2,HIGH);
+    digitalWrite(SIGNALLIGHT,HIGH);
+    digitalWrite(WASHPUMP,HIGH);
+    //tower
+    //index
+    if (armProfile_finished)
+    {
+      CONTROLSTATE = MOVEINTOWER;
+      centrifugeStartTime = millis();
+    }
+    //LASTSTATE
+    LASTSTATE = DRILLFINISHING;
+    break;
+
+    case MOVEOUTTOWERAGAIN:
+    //Drill
+    commandMotor(1,0);
+    commandMotor(2,0);
+    //arm
+    // armProfile_idx = 2;
+    //Centrifuge
+    Serial2.print('R');
+    //relays
+    digitalWrite(VALVE1,HIGH); //
+    if (TOWERPLACE = OUT)
+      digitalWrite(VALVE2,LOW);
+    else
+      digitalWrite(VALVE2,HIGH);
+    digitalWrite(SIGNALLIGHT,HIGH);
+    digitalWrite(WASHPUMP,HIGH);
+    //tower
+    Serial3.print('o');
+    //index
+    if (millis() - centrifugeStartTime > CENTRIFUGETIME)
+    {
+      CONTROLSTATE = STOPPINGCENTRIFUGE;
+    }
+    //LASTSTATE
+    LASTSTATE = MOVEOUTTOWERAGAIN;
+    break;
+
+    case STOPPINGCENTRIFUGE:
+    //Drill
+    commandMotor(1,0);
+    commandMotor(2,0);
+    //arm
+    // armProfile_idx = 2;
+    //Centrifuge
+    Serial2.print(sample_idx);
+    //relays
+    digitalWrite(VALVE1,HIGH); //
+    digitalWrite(VALVE2,HIGH);
+    digitalWrite(SIGNALLIGHT,HIGH);
+    digitalWrite(WASHPUMP,HIGH);
+    //tower
+    Serial3.print('i');
+    //index
+    ////////////////////////////////////////////////////////////////
+    //ask for current speed and advance to next stage
+    //tower in place or not
+    //CONTROLSTATE = RUNARMPROFILE3;
+    //LASTSTATE
+    LASTSTATE = STOPPINGCENTRIFUGE;
+    break;
+
+    case RUNARMPROFILE3:
+    //Drill
+    commandMotor(1,0);
+    commandMotor(2,0);
+    //arm
+    armProfile_idx = 3;
+    //Centrifuge
+    // Serial2.print('R');
+    //relays
+    digitalWrite(VALVE1,HIGH); //
+    digitalWrite(VALVE2,HIGH);
+    digitalWrite(SIGNALLIGHT,HIGH);
+    digitalWrite(WASHPUMP,LOW);
+    //tower
+    // Serial3.print('o');
+    //index
+    if (armProfile_finished)
+    {
+      //all done, reset all parameters, advance index, tell the car to go.
+    }
+
+    //LASTSTATE
+    LASTSTATE = RUNARMPROFILE3;
+    break;
+    
   }
 }
 
@@ -213,7 +343,7 @@ void upLimitISR()
   }
   else if (CONTROLSTATE == DRILLFINISHING)
   {
-    CONTROLSTATE = DRILLPENDING;
+    drillAtTop = true;
   }
 }
 
@@ -223,5 +353,6 @@ void midLimitISR()
   {
     CONTROLSTATE = EXTRACTINGHOLD;
     extractingHoldEnterTime = millis();
+    extractingHoldEnterTime_water = millis();
   }
 }

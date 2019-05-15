@@ -23,6 +23,9 @@
 #define VERTICALSPEED     0.5     //vertical motor speed
 #define DRILLSPEED        1     //Drill motor speed
 #define SAFETYPERIOD      100   //period before stop
+#define EXTRACTINGTIME    10000
+#define EXTRACTINGWATERTIME 3000
+#define CENTRIFUGETIME    10000
 
 void rosInit();
 void resetSafetyTimer();
@@ -49,6 +52,7 @@ static long safetyTimer = 0;
 static long extractingHoldEnterTime = 0;
 static uint8_t sample_idx = 1;
 static bool armProfile_finished = false;
+static bool drillAtTop = false;
 
 ros::Publisher pub_armProfile_idx("/armProfile_idx", &armProfile_idx_ros);
 ros::Publisher pub_controlState("/controlState", &controlState_ros);
