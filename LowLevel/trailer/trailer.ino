@@ -6,6 +6,7 @@ void setup()
   resetSafetyTimer();
   Serial1.begin(9600); //connect to drill motor controller
   Serial2.begin(115200); //connect to Centrifuge
+  Serial3.begin(115200);
   GPIOInit();
 }
 
@@ -79,7 +80,7 @@ void stateRun()
     digitalWrite(WASHPUMP,HIGH);
     //tower
     //index
-    Serail3.print(sample_idx)
+    Serial3.print(sample_idx);
     //LASTSTATE
     LASTSTATE = DRILLING;
     break;
@@ -120,7 +121,7 @@ void stateRun()
     Serial3.print('i');
     //index
     //LASTSTATE
-    if (TOWERPLACE = IN)
+    if (TOWERPLACE == IN)
       CONTROLSTATE = RUNARMPROFILE1;
     LASTSTATE = DRILLWAITING;
 
@@ -143,14 +144,17 @@ void stateRun()
     //index
     //LASTSTATE
     if (armProfile_finished)
+    {
       CONTROLSTATE = EXTRACTING;
+      armProfile_idx = 0;
+    }
     LASTSTATE = RUNARMPROFILE1;
 
     break;
 
     case EXTRACTING:
     //Drill
-    commandMotor(1,-VIRTICALSPEED);
+    commandMotor(1,-VERTICALSPEED);
     commandMotor(2,DRILLSPEED);
     //arm
     // armProfile_idx = 1;
@@ -196,7 +200,7 @@ void stateRun()
     case DRILLFINISHING:
     //Drill
     if (!drillAtTop)
-      commandMotor(1,VIRTICALSPEED);
+      commandMotor(1,VERTICALSPEED);
     else
       commandMotor(1,0);
     commandMotor(2,0);
@@ -214,6 +218,7 @@ void stateRun()
     if (armProfile_finished)
     {
       CONTROLSTATE = MOVEINTOWER;
+      armProfile_idx = 0;
       centrifugeStartTime = millis();
     }
     //LASTSTATE
@@ -289,7 +294,8 @@ void stateRun()
     //index
     if (armProfile_finished)
     {
-      //all done, reset all parameters, advance index, tell the car to go.
+      armProfile_idx = 0;
+     CONTROLSTATE = PAUSED; 
     }
 
     //LASTSTATE
@@ -301,15 +307,20 @@ void stateRun()
 
 void serialEvent3()
 {
-  if Serial3.avaliable()
+  nh.loginfo("serial3Received");
+  if (Serial3.available())
   {
     char inChar = (char)Serial3.read();
     if (inChar == 'o')
     {
+//      nh.loginfo("serial3Received_OUT");
+
       TOWERPLACE = OUT;
     }
     else if (inChar == 'i')
     {
+//      nh.loginfo("serial3Received_IN");
+
       TOWERPLACE = IN;
     }
   }

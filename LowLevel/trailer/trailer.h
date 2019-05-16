@@ -5,6 +5,7 @@
 #include <std_msgs/UInt16MultiArray.h>
 #include <std_msgs/MultiArrayDimension.h>
 #include <std_msgs/Char.h>
+#include <std_msgs/Bool.h>
 
 #define LIMITUP           20    //upper limit switch pin active low
 #define LIMITDOWN         2    //lower limit switch pin active low
@@ -53,6 +54,8 @@ static long extractingHoldEnterTime = 0;
 static uint8_t sample_idx = 1;
 static bool armProfile_finished = false;
 static bool drillAtTop = false;
+static long extractingHoldEnterTime_water = 0;
+static long centrifugeStartTime = 0;
 
 ros::Publisher pub_armProfile_idx("/armProfile_idx", &armProfile_idx_ros);
 ros::Publisher pub_controlState("/controlState", &controlState_ros);
@@ -70,17 +73,22 @@ enum controlStates
 {
   PAUSED,
   MOVEOUTTOWER,
+  MOVEINTOWER,
   DRILLING,
   PULLING,
   DRILLWAITING,
   RUNARMPROFILE1,
   EXTRACTING,
   EXTRACTINGHOLD,
-  DRILLPENDING,
+  // DRILLPENDING,
   DRILLFINISHING,
+  MOVEOUTTOWERAGAIN,
+  STOPPINGCENTRIFUGE,
+  RUNARMPROFILE3
+  
 };
 controlStates CONTROLSTATE = PAUSED;
-controlStates LASTSTATE = DRILLING;
+controlStates LASTSTATE = MOVEOUTTOWER;
 
 void updateROSPubData()
 {

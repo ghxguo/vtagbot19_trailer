@@ -15,6 +15,7 @@
 #include <std_msgs/UInt8.h>
 #include <std_msgs/UInt16.h>
 #include <std_msgs/Char.h>
+#include <std_msgs/Bool.h>
 #include <vector>
 
 #define PROFILE1LENGTH  412
@@ -1417,14 +1418,15 @@ bool profile3Inited = false;
 bool profileCompleted = false;
 
 std_msgs::UInt16MultiArray goalPos_ros;
-std_msgs::Char command_ros;
+std_msgs::Bool armState_ros;
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "handler");
   /* start cyclic part */
   ros::NodeHandle n;
   ros::Publisher goalPos_pub = n.advertise<std_msgs::UInt16MultiArray>("armGoalPos", 100);
-  //ros::Publisher command_pub = n.advertise<std_msgs::Char>("trailerCommand",1000);
+  ros::Publisher armState_pub = n.advertise<std_msgs::Bool>("armState",100);
   ros::Subscriber curPos_sub = n.subscribe("armCurPos", 100, curPos_cb);
   ros::Subscriber armProfile_sub = n.subscribe("armProfile_idx", 100, armProfile_cb);
   ros::Subscriber drillState_sub = n.subscribe("drillState", 100, drillState_cb);
@@ -1441,6 +1443,7 @@ int main(int argc, char **argv)
     mainTasks();
     //command_pub.publish(command_ros);
     goalPos_pub.publish(goalPos_ros);
+    armState_pub.publish(armState_ros);
     ros::spinOnce();
     loop_rate.sleep();
   }
@@ -1463,6 +1466,7 @@ void runArmState()
     case 0:
       step = 0;
       profileInited = false;
+      armState_ros.data = false;
     break;
     case 1:
       // ROS_INFO("running profile 1");
@@ -1494,6 +1498,7 @@ void runArmState()
         {
           goalPos[i] = 0;
         }
+        armState_ros.data = true;
         // armProfile_idx = 0;
       }
     break;
@@ -1527,6 +1532,7 @@ void runArmState()
         {
           goalPos[i] = 0;
         }
+        armState_ros.data = true;
         // armProfile_idx = 0;
       }
     break;
@@ -1560,6 +1566,7 @@ void runArmState()
         {
           goalPos[i] = 0;
         }
+        armState_ros.data = true;
         // armProfile_idx = 0;
       }
     break;
