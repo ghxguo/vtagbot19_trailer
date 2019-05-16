@@ -124,6 +124,7 @@ void rosInit()
   nh.advertise(pub_armProfile_idx);
   nh.advertise(pub_controlState);
   nh.subscribe(command_sub);
+  nh.subscribe(armState_sub);
 }
 
 void resetSafetyTimer()

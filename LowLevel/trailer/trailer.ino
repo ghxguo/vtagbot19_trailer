@@ -138,7 +138,7 @@ void stateRun()
     //relays
     digitalWrite(VALVE1,HIGH);
     digitalWrite(VALVE2,HIGH);
-    digitalWrite(SIGNALLIGHT,HIGH);
+    digitalWrite(SIGNALLIGHT,LOW);
     digitalWrite(WASHPUMP,HIGH);
     //tower
     //index
