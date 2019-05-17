@@ -28,6 +28,7 @@
 #define EXTRACTINGTIME    10000
 #define EXTRACTINGWATERTIME 3000
 #define CENTRIFUGETIME    120000
+#define SMALLPUMPTIME     5000
 
 void rosInit();
 void resetSafetyTimer();
@@ -59,6 +60,7 @@ static bool drillAtTop = false;
 static long extractingHoldEnterTime_water = 0;
 static long centrifugeStartTime = 0;
 static bool processBegin = false;
+static long smallPumpStartTime = 0;
 
 ros::Publisher pub_armProfile_idx("/armProfile_idx", &armProfile_idx_ros);
 ros::Publisher pub_controlState("/controlState", &controlState_ros);

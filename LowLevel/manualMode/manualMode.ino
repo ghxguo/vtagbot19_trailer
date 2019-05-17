@@ -2,6 +2,7 @@ char inChar;
 void setup() {
 Serial.begin(9600);
 Serial1.begin(9600);
+Serial2.begin(115200);
 Serial3.begin(115200);
 }
 
@@ -9,11 +10,11 @@ void loop() {
   // put your main code here, to run repeatedly:
   if (inChar == 'd')
   {
-    commandMotor(1,-0.5);
+    commandMotor(1,-1);
   }
   else if (inChar == 'u')
   {
-    commandMotor(1,0.5);
+    commandMotor(1,1);
   }
   else if (inChar == ' ')
   {
@@ -36,6 +37,7 @@ void serialEvent()
   }
   else
   {
+    Serial2.write(inChar);
     Serial3.write(inChar);
   }
 }

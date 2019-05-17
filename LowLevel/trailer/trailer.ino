@@ -28,7 +28,7 @@ void stateRun()
     commandMotor(1,0);
     commandMotor(2,0);
     //arm
-    armProfile_idx = 0;
+//    armProfile_idx = 0;
     //Centrifuge
     stopCentrifuge();
     //relays
@@ -57,6 +57,7 @@ void stateRun()
     digitalWrite(WASHPUMP,HIGH);
     //tower
     Serial3.print('o');
+    delay(5);
     if (TOWERPLACE == OUT)
       CONTROLSTATE = DRILLING;
     //index
@@ -72,6 +73,7 @@ void stateRun()
     armProfile_idx = 0;
     //Centrifuge
     Serial2.print(sample_idx);
+    delay(5);
     // stopCentrifuge();
     //relays
     digitalWrite(VALVE1,HIGH);
@@ -81,18 +83,22 @@ void stateRun()
     //tower
     //index
     Serial3.print(sample_idx);
+    delay(5);
+
     //LASTSTATE
     LASTSTATE = DRILLING;
     break;
 
     case PULLING:
     //Drill
-    commandMotor(1, VERTICALSPEED);
+    commandMotor(1, 1);
     commandMotor(2, DRILLSPEED);
     //arm
     armProfile_idx = 0;
     //Centrifuge
     Serial2.print(sample_idx);
+    delay(5);
+
     //relays
     digitalWrite(VALVE1,HIGH);
     digitalWrite(VALVE2,HIGH);
@@ -112,6 +118,7 @@ void stateRun()
     armProfile_idx = 0;
     //Centrifuge
     Serial2.print(sample_idx);
+    delay(5);
     //relays
     digitalWrite(VALVE1,HIGH);
     digitalWrite(VALVE2,HIGH);
@@ -119,6 +126,7 @@ void stateRun()
     digitalWrite(WASHPUMP,HIGH);
     //tower
     Serial3.print('i');
+    delay(5);
     //index
     //LASTSTATE
     if (TOWERPLACE == IN)
@@ -132,9 +140,11 @@ void stateRun()
     commandMotor(1,0);
     commandMotor(2,0);
     //arm
-    armProfile_idx = 1; //bug here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! communication delay, need to change on high level
+    armProfile_idx = 1; 
     //Centrifuge
     Serial2.print(sample_idx);
+    delay(5);
+
     //relays
     digitalWrite(VALVE1,HIGH);
     digitalWrite(VALVE2,HIGH);
@@ -200,7 +210,7 @@ void stateRun()
     case DRILLFINISHING:
     //Drill
     if (!drillAtTop)
-      commandMotor(1,VERTICALSPEED);
+      commandMotor(1,1);
     else
       commandMotor(1,0);
     commandMotor(2,0);
@@ -233,6 +243,8 @@ void stateRun()
     // armProfile_idx = 2;
     //Centrifuge
     Serial2.print('R');
+    delay(5);
+
     //relays
     digitalWrite(VALVE1,HIGH); //
     if (TOWERPLACE = OUT)
@@ -243,6 +255,8 @@ void stateRun()
     digitalWrite(WASHPUMP,HIGH);
     //tower
     Serial3.print('o');
+    delay(5);
+
     //index
     if (millis() - centrifugeStartTime > CENTRIFUGETIME)
     {
@@ -260,6 +274,8 @@ void stateRun()
     // armProfile_idx = 2;
     //Centrifuge
     Serial2.print(sample_idx);
+    delay(5);
+
     //relays
     digitalWrite(VALVE1,HIGH); //
     digitalWrite(VALVE2,HIGH);
@@ -267,6 +283,7 @@ void stateRun()
     digitalWrite(WASHPUMP,HIGH);
     //tower
     Serial3.print('i');
+    delay(5);
     //index
     ////////////////////////////////////////////////////////////////
     //ask for current speed and advance to next stage
@@ -274,7 +291,10 @@ void stateRun()
     //CONTROLSTATE = RUNARMPROFILE3;
 
     if (TOWERPLACE == IN)
+    {
       CONTROLSTATE = RUNARMPROFILE3;
+      smallPumpStartTime = millis();
+    }
     //LASTSTATE
     
     LASTSTATE = STOPPINGCENTRIFUGE;
@@ -292,7 +312,14 @@ void stateRun()
     digitalWrite(VALVE1,HIGH); //
     digitalWrite(VALVE2,HIGH);
     digitalWrite(SIGNALLIGHT,HIGH);
-    digitalWrite(WASHPUMP,LOW);
+    if (millis()-smallPumpStartTime > SMALLPUMPTIME)
+    {
+      digitalWrite(WASHPUMP, HIGH);
+    }
+    else
+    {
+      digitalWrite(WASHPUMP,LOW);
+    }
     //tower
     // Serial3.print('o');
     //index
@@ -405,6 +432,7 @@ void trailerIDX_cb(const std_msgs::Byte& data)
     {
       processBegin = true;
       CONTROLSTATE = MOVEOUTTOWER;
+      sample_idx = idx;
     }
   }
 }

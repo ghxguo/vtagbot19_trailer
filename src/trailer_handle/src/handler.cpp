@@ -21,6 +21,7 @@
 #define PROFILE1LENGTH  412
 #define PROFILE2LENGTH  245
 #define PROFILE3LENGTH  402
+#define PROFILE4LENGTH  100
 #define MOTIONTH        40
 
 uint16_t profile1[] =
@@ -1395,6 +1396,9 @@ uint16_t profile3[]=
 409,510,230,488,287,2806,
 
 };
+uint16_t profile4[]=
+{
+};
 void curPos_cb(const std_msgs::UInt16MultiArray::ConstPtr& array);
 // void goalPos_cb(const std_msgs::UInt16MultiArray::ConstPtr& array);
 void armProfile_cb(const std_msgs::UInt16::ConstPtr& idx);
@@ -1415,6 +1419,7 @@ uint8_t servoState = 0;
 bool profileInited = false;
 bool profile2Inited = false;
 bool profile3Inited = false;
+bool profile4Inited = false;
 bool profileCompleted = false;
 
 std_msgs::UInt16MultiArray goalPos_ros;
@@ -1691,7 +1696,42 @@ void runArm()
         profile3Inited = true;
       }
     }
+  else if (armProfile_idx ==4)
+  {
 
+      if(profile4Inited)
+      {
+
+        if(step < PROFILE4LENGTH)
+        {
+          if(readyToAdvance())
+          {
+            // ROS_INFO("advanced to next step");
+            step++;
+            for (int i = 0; i < 6; i++)
+            {
+              goalPos[i] = profile4[(i)+step*6];
+            }
+          }
+        }
+        else
+        {
+          for (int i = 0; i < 6; i++)
+          {
+            goalPos[i] = 0;
+          }
+        }
+      }
+      else
+      {
+        step = 0;
+        for (int i = 0; i < 6; i++)
+        {
+          goalPos[i] = profile4[i];
+        }
+        profile4Inited = true;
+      }
+    }
 }
 bool readyToAdvance()
 {
