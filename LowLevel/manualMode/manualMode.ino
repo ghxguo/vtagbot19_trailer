@@ -37,7 +37,7 @@ void serialEvent()
   }
   else
   {
-    Serial2.write(inChar);
+    Serial2.write(inChar);e
     Serial3.write(inChar);
   }
 }
