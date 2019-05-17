@@ -217,7 +217,7 @@ void stateRun()
     //index
     if (armProfile_finished)
     {
-      CONTROLSTATE = MOVEINTOWER;
+      CONTROLSTATE = MOVEOUTTOWERAGAIN;
       armProfile_idx = 0;
       centrifugeStartTime = millis();
     }
@@ -272,7 +272,11 @@ void stateRun()
     //ask for current speed and advance to next stage
     //tower in place or not
     //CONTROLSTATE = RUNARMPROFILE3;
+
+    if (TOWERPLACE == IN)
+      CONTROLSTATE = RUNARMPROFILE3;
     //LASTSTATE
+    
     LASTSTATE = STOPPINGCENTRIFUGE;
     break;
 
@@ -295,7 +299,7 @@ void stateRun()
     if (armProfile_finished)
     {
       armProfile_idx = 0;
-     CONTROLSTATE = PAUSED; 
+      CONTROLSTATE = PAUSED; 
     }
 
     //LASTSTATE

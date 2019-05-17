@@ -26,7 +26,7 @@
 #define SAFETYPERIOD      100   //period before stop
 #define EXTRACTINGTIME    10000
 #define EXTRACTINGWATERTIME 3000
-#define CENTRIFUGETIME    10000
+#define CENTRIFUGETIME    120000
 
 void rosInit();
 void resetSafetyTimer();
