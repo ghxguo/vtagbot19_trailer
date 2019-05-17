@@ -6,6 +6,7 @@
 #include <std_msgs/MultiArrayDimension.h>
 #include <std_msgs/Char.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Byte.h>
 
 #define LIMITUP           20    //upper limit switch pin active low
 #define LIMITDOWN         2    //lower limit switch pin active low
@@ -41,6 +42,7 @@ void commandMotor(int id, float speedFrac);
 void stopCentrifuge();
 void stateRun();
 void armState_cb(const std_msgs::Bool& data);
+void trailerIDX_cb(const std_msgs::Byte& data);
 
 
 ros::NodeHandle nh;
@@ -51,16 +53,18 @@ static uint8_t armProfile_idx;
 volatile uint16_t armStep = 0;
 static long safetyTimer = 0;
 static long extractingHoldEnterTime = 0;
-static uint8_t sample_idx = 1;
+static uint8_t sample_idx = 0;
 static bool armProfile_finished = false;
 static bool drillAtTop = false;
 static long extractingHoldEnterTime_water = 0;
 static long centrifugeStartTime = 0;
+static bool processBegin = false;
 
 ros::Publisher pub_armProfile_idx("/armProfile_idx", &armProfile_idx_ros);
 ros::Publisher pub_controlState("/controlState", &controlState_ros);
 ros::Subscriber<std_msgs::Char> command_sub("/trailerCommand", &trailerCommand_cb);
 ros::Subscriber<std_msgs::Bool> armState_sub("/armState", &armState_cb);
+ros::Subscriber<std_msgs::Byte> trailerIDX_sub("/trailerIDX", &trailerIDX_cb);
 
 enum towerPlace{
   IN,
@@ -84,11 +88,12 @@ enum controlStates
   DRILLFINISHING,
   MOVEOUTTOWERAGAIN,
   STOPPINGCENTRIFUGE,
-  RUNARMPROFILE3
-  
+  RUNARMPROFILE3,
+  RUNARMPROFILE4,
+  WAITING
 };
 controlStates CONTROLSTATE = PAUSED;
-controlStates LASTSTATE = MOVEOUTTOWER;
+controlStates LASTSTATE = WAITING;
 
 void updateROSPubData()
 {
@@ -125,6 +130,7 @@ void rosInit()
   nh.advertise(pub_controlState);
   nh.subscribe(command_sub);
   nh.subscribe(armState_sub);
+  nh.subscribe(trailerIDX_sub);
 }
 
 void resetSafetyTimer()

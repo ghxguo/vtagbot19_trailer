@@ -299,13 +299,64 @@ void stateRun()
     if (armProfile_finished)
     {
       armProfile_idx = 0;
-      CONTROLSTATE = PAUSED; 
+      CONTROLSTATE = RUNARMPROFILE4; 
     }
 
     //LASTSTATE
     LASTSTATE = RUNARMPROFILE3;
     break;
     
+    case RUNARMPROFILE4:
+    //Drill
+    commandMotor(1,0);
+    commandMotor(2,0);
+    //arm
+    if (armProfile_finished)
+    {
+      armProfile_idx = 0;
+      CONTROLSTATE = WAITING; 
+    }
+    else
+    {
+      armProfile_idx = 4;
+    }
+    //Centrifuge
+    // Serial2.print('R');
+    //relays
+    digitalWrite(VALVE1,HIGH); //
+    digitalWrite(VALVE2,HIGH);
+    digitalWrite(SIGNALLIGHT,HIGH);
+    digitalWrite(WASHPUMP,HIGH);
+    //tower
+    // Serial3.print('o');
+    //index
+
+
+    //LASTSTATE
+    LASTSTATE = RUNARMPROFILE4;
+    break;
+
+    case WAITING:
+    //Drill
+    commandMotor(1,0);
+    commandMotor(2,0);
+    //arm
+    armProfile_idx = 0;
+    //Centrifuge
+    // Serial2.print('R');
+    //relays
+    digitalWrite(VALVE1,HIGH); //
+    digitalWrite(VALVE2,HIGH);
+    digitalWrite(SIGNALLIGHT,HIGH);
+    digitalWrite(WASHPUMP,HIGH);
+    //tower
+    // Serial3.print('o');
+    //index
+    processBegin = false;
+
+    //LASTSTATE
+    LASTSTATE = WAITING;
+    break;    
   }
 }
 
@@ -345,7 +396,18 @@ void armState_cb(const std_msgs::Bool& data)
 {
   armProfile_finished = data.data;
 }
-
+void trailerIDX_cb(const std_msgs::Byte& data)
+{
+  uint8_t idx = (uint8_t)data.data;
+  if (idx != sample_idx)
+  {
+    if(!processBegin)
+    {
+      processBegin = true;
+      CONTROLSTATE = MOVEOUTTOWER;
+    }
+  }
+}
 void downLimitISR()
 {
   CONTROLSTATE = PULLING;
