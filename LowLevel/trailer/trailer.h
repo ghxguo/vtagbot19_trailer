@@ -29,6 +29,7 @@
 #define EXTRACTINGWATERTIME 3000
 #define CENTRIFUGETIME    120000
 #define SMALLPUMPTIME     5000
+#define BACKWASHTIME      10000
 
 void rosInit();
 void resetSafetyTimer();
@@ -61,6 +62,7 @@ static long extractingHoldEnterTime_water = 0;
 static long centrifugeStartTime = 0;
 static bool processBegin = false;
 static long smallPumpStartTime = 0;
+static long backwashEnterTime = 0;
 
 ros::Publisher pub_armProfile_idx("/armProfile_idx", &armProfile_idx_ros);
 ros::Publisher pub_controlState("/controlState", &controlState_ros);
@@ -94,7 +96,7 @@ enum controlStates
   RUNARMPROFILE4,
   WAITING
 };
-controlStates CONTROLSTATE = PAUSED;
+controlStates CONTROLSTATE = WAITING;
 controlStates LASTSTATE = WAITING;
 
 void updateROSPubData()

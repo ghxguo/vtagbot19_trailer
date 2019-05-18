@@ -230,6 +230,7 @@ void stateRun()
       CONTROLSTATE = MOVEOUTTOWERAGAIN;
       armProfile_idx = 0;
       centrifugeStartTime = millis();
+      backwashEnterTime = millis();
     }
     //LASTSTATE
     LASTSTATE = DRILLFINISHING;
@@ -248,9 +249,20 @@ void stateRun()
     //relays
     digitalWrite(VALVE1,HIGH); //
     if (TOWERPLACE = OUT)
-      digitalWrite(VALVE2,LOW);
+    {
+      if (millis() - backwashEnterTime < BACKWASHTIME)
+      {
+        digitalWrite(VALVE2,LOW);
+      }
+      else
+      {
+            digitalWrite(VALVE2,HIGH);
+      }
+    }
     else
+    {
       digitalWrite(VALVE2,HIGH);
+    }
     digitalWrite(SIGNALLIGHT,HIGH);
     digitalWrite(WASHPUMP,HIGH);
     //tower
@@ -326,42 +338,13 @@ void stateRun()
     if (armProfile_finished)
     {
       armProfile_idx = 0;
-      CONTROLSTATE = RUNARMPROFILE4; 
+      CONTROLSTATE = WAITING; 
     }
 
     //LASTSTATE
     LASTSTATE = RUNARMPROFILE3;
     break;
-    
-    case RUNARMPROFILE4:
-    //Drill
-    commandMotor(1,0);
-    commandMotor(2,0);
-    //arm
-    if (armProfile_finished)
-    {
-      armProfile_idx = 0;
-      CONTROLSTATE = WAITING; 
-    }
-    else
-    {
-      armProfile_idx = 4;
-    }
-    //Centrifuge
-    // Serial2.print('R');
-    //relays
-    digitalWrite(VALVE1,HIGH); //
-    digitalWrite(VALVE2,HIGH);
-    digitalWrite(SIGNALLIGHT,HIGH);
-    digitalWrite(WASHPUMP,HIGH);
-    //tower
-    // Serial3.print('o');
-    //index
 
-
-    //LASTSTATE
-    LASTSTATE = RUNARMPROFILE4;
-    break;
 
     case WAITING:
     //Drill
@@ -380,7 +363,12 @@ void stateRun()
     // Serial3.print('o');
     //index
     processBegin = false;
-
+//    extractingHoldEnterTime = 0;
+//    armProfile_finished = false;
+//    drillAtTop = false;
+//    extractingHoldEnterTime_water = 0;
+//    centrifugeStartTime = 0;
+//    smallPumpStartTime = 0;
     //LASTSTATE
     LASTSTATE = WAITING;
     break;    
