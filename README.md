@@ -1,3 +1,4 @@
 # vtagbot19_trailer
-We are currently working on open source licensing issues. This repo will be public again within a week.
+We are currently working on open source licensing issues. Please come back again for sugested Citations
+
 
